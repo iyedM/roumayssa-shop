@@ -12,7 +12,7 @@ $id = $_GET['id'] ?? 0;
 /* ===== Produit ===== */
 $stmt = $pdo->prepare("SELECT * FROM products WHERE id = :id");
 $stmt->execute(['id' => $id]);
-$product = $stmt->fetch();
+$product = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$product) exit("Produit introuvable");
 
 /* ===== Catégories ===== */
@@ -21,7 +21,7 @@ $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
 /* ===== Images du produit ===== */
 $stmtImg = $pdo->prepare("SELECT * FROM product_images WHERE product_id = :id");
 $stmtImg->execute(['id' => $id]);
-$images = $stmtImg->fetchAll();
+$images = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
 
 $error = '';
 $success = '';
@@ -32,14 +32,26 @@ if (isset($_GET['delete_image'])) {
 
     $stmt = $pdo->prepare("SELECT * FROM product_images WHERE id = :id");
     $stmt->execute(['id' => $imgId]);
-    $img = $stmt->fetch();
+    $img = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($img) {
-        if (file_exists($img['image'])) {
-            unlink($img['image']);
+        if (file_exists("../" . $img['image'])) {  // Chemin physique
+            unlink("../" . $img['image']);
         }
         $pdo->prepare("DELETE FROM product_images WHERE id = :id")
             ->execute(['id' => $imgId]);
+
+        // Si l'image supprimée était l'image principale, mettre à jour produit
+        if ($product['image'] === $img['image']) {
+            $stmtFirst = $pdo->prepare("SELECT image FROM product_images WHERE product_id = :id LIMIT 1");
+            $stmtFirst->execute(['id' => $id]);
+            $firstImg = $stmtFirst->fetchColumn();
+            $stmtUpdate = $pdo->prepare("UPDATE products SET image = :img WHERE id = :id");
+            $stmtUpdate->execute([
+                'img' => $firstImg ?: '',
+                'id' => $id
+            ]);
+        }
     }
 
     header("Location: edit_product.php?id=" . $id);
@@ -85,21 +97,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         /* ===== Ajouter nouvelles images ===== */
         if (!empty($_FILES['images']['name'][0])) {
             $targetDir = "../uploads/";
+            $firstImage = empty($product['image']); // si pas d'image principale
 
             foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
-
                 if ($_FILES['images']['error'][$key] === 0) {
                     $fileName = time() . '_' . $key . '_' . basename($_FILES['images']['name'][$key]);
                     $imagePath = $targetDir . $fileName;
+                    $webPath = 'uploads/' . $fileName; // chemin navigateur
 
                     if (move_uploaded_file($tmpName, $imagePath)) {
+                        // Insérer dans product_images
                         $pdo->prepare("
                             INSERT INTO product_images (product_id, image)
                             VALUES (:product_id, :image)
                         ")->execute([
                             'product_id' => $id,
-                            'image' => $imagePath
+                            'image' => $webPath
                         ]);
+
+                        // Si pas d'image principale, mettre la première uploadée
+                        if ($firstImage) {
+                            $pdo->prepare("UPDATE products SET image = :img WHERE id = :id")
+                                ->execute([
+                                    'img' => $webPath,
+                                    'id' => $id
+                                ]);
+                            $firstImage = false;
+                        }
                     }
                 }
             }
@@ -107,15 +131,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $success = "Produit modifié avec succès !";
 
-        // recharger images
+        // recharger produit et images
+        $stmt = $pdo->prepare("SELECT * FROM products WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
         $stmtImg->execute(['id' => $id]);
-        $images = $stmtImg->fetchAll();
+        $images = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
 
     } catch (Exception $e) {
         $error = $e->getMessage();
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -123,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Modifier Produit</title>
 <style>
 img { border:1px solid #ccc; padding:3px; }
+.gallery img { margin:5px; display:inline-block; }
 </style>
 </head>
 <body>
@@ -164,8 +194,8 @@ Description:<br>
 <h3>Images actuelles</h3>
 <?php if ($images): ?>
     <?php foreach ($images as $img): ?>
-        <div style="display:inline-block;margin:5px">
-            <img src="<?= htmlspecialchars($img['image']) ?>" width="100"><br>
+        <div style="display:inline-block;margin:5px;text-align:center">
+            <img src="<?= htmlspecialchars('../' . $img['image']) ?>" width="100"><br>
             <a href="?id=<?= $id ?>&delete_image=<?= $img['id'] ?>"
                onclick="return confirm('Supprimer cette image ?')">
                Supprimer
@@ -175,6 +205,7 @@ Description:<br>
 <?php else: ?>
     <p>Aucune image</p>
 <?php endif; ?>
+
 
 <br><br>
 Ajouter nouvelles images:

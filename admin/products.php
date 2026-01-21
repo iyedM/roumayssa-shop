@@ -51,7 +51,9 @@ img { max-width:80px; height:auto; }
         <td><?= $p['active'] ? 'Oui' : 'Non' ?></td>
         <td>
             <?php if($p['image']): ?>
-                <img src="<?= htmlspecialchars($p['image']) ?>" alt="Image produit">
+                <img src="<?= '../' . htmlspecialchars($p['image']) ?>" alt="Image produit">
+            <?php else: ?>
+                <img src="../assets/images/no-image.png" alt="Pas d'image">
             <?php endif; ?>
         </td>
         <td>
@@ -62,9 +64,8 @@ img { max-width:80px; height:auto; }
         </td>
         <td>
             <a href="edit_product.php?id=<?= $p['id'] ?>">Modifier</a> |
-            <a href="delete_product.php?id=<?= $p['id'] ?>" onclick="return confirm('Supprimer ce produit ?')">Supprimer</a>
+            <a href="delete_product.php?id=<?= $p['id'] ?>" onclick="return confirm('Supprimer ce produit ?')">Supprimer</a> |
             <a href="../product_detail.php?id=<?= $p['id'] ?>">Voir détails</a>
-
         </td>
     </tr>
     <?php endforeach; ?>

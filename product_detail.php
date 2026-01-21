@@ -1,11 +1,10 @@
 <?php
 require_once "includes/db.php";
 
-// Récupérer l'ID depuis l'URL
 $id = $_GET['id'] ?? 0;
 if (!$id) exit("Produit invalide");
 
-// ===== Produit =====
+// Produit
 $stmt = $pdo->prepare("
     SELECT p.*, c.name AS category_name
     FROM products p
@@ -14,29 +13,24 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute(['id' => $id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
-
 if (!$product) exit("Produit introuvable");
 
-// ===== Images =====
-// Récupérer toutes les images liées au produit
-$stmtImg = $pdo->prepare("
-    SELECT image FROM product_images WHERE product_id = :id
-");
+// Images
+$stmtImg = $pdo->prepare("SELECT image FROM product_images WHERE product_id = :id");
 $stmtImg->execute(['id' => $id]);
 $imagesDb = $stmtImg->fetchAll(PDO::FETCH_ASSOC);
 
-// Si aucune image dans product_images, utiliser l'image principale du produit
 $images = [];
 if (!empty($imagesDb)) {
     foreach ($imagesDb as $img) {
-        // Rendre le chemin accessible depuis le navigateur
-        $images[] = 'uploads/' . basename($img['image']);
+        $images[] = $img['image']; // pas de ../ car chemin DB est déjà relatif à la racine
     }
 } elseif (!empty($product['image'])) {
-    $images[] = 'uploads/' . basename($product['image']);
+    $images[] = $product['image'];
 } else {
     $images[] = 'assets/images/no-image.png';
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -57,13 +51,11 @@ body { font-family: Arial; background:#fafafa; margin:0; padding:0; }
 .description { margin-top:20px; white-space:pre-wrap; }
 .back-link { display:inline-block; margin-top:20px; text-decoration:none; color:#e91e63; }
 </style>
-
 <script>
 function changeImage(src){
     document.getElementById("mainImg").src = src;
 }
 </script>
-
 </head>
 <body>
 
@@ -87,11 +79,11 @@ function changeImage(src){
 <p class="price">Prix : <?= number_format($product['price'], 2) ?> DT</p>
 
 <p>
-    <?php if ($product['stock'] > 0): ?>
-        <span class="stock">En stock</span>
-    <?php else: ?>
-        <span class="out">Rupture de stock</span>
-    <?php endif; ?>
+<?php if ($product['stock'] > 0): ?>
+    <span class="stock">En stock</span>
+<?php else: ?>
+    <span class="out">Rupture de stock</span>
+<?php endif; ?>
 </p>
 
 <?php if ($product['description']): ?>
@@ -102,6 +94,5 @@ function changeImage(src){
 <a class="back-link" href="admin/products.php">← Retour boutique</a>
 
 </div>
-
 </body>
 </html>
