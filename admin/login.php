@@ -1,12 +1,9 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 session_start();
-require_once "../includes/db.php"; // connexion PDO
+require_once "../includes/db.php";
+require_once "../config/config.php";
 
-// Si déjà connecté, rediriger vers dashboard
+// If already logged in, redirect to dashboard
 if (isset($_SESSION['admin_id'])) {
     header("Location: dashboard.php");
     exit;
@@ -15,16 +12,16 @@ if (isset($_SESSION['admin_id'])) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = $_POST['login'] ?? ''; // Email ou username
+    $login = $_POST['login'] ?? '';
     $password = $_POST['password'] ?? '';
-
-    // Vérifier si admin existe (sans hash)
+    
+    // Check if admin exists
     $stmt = $pdo->prepare("SELECT * FROM admin WHERE email = :login OR username = :login");
     $stmt->execute(['login' => $login]);
     $admin = $stmt->fetch();
-
+    
     if ($admin && $password === $admin['password']) {
-        // Connexion réussie
+        // Login successful
         $_SESSION['admin_id'] = $admin['id'];
         $_SESSION['admin_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
         header("Location: dashboard.php");
@@ -34,29 +31,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Connexion Admin - Roumayssa Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Admin - <?= SITE_NAME ?></title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    
     <style>
-        body { font-family: Arial; background: #f8f8f8; display:flex; justify-content:center; align-items:center; height:100vh; }
-        .login-box { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); width:300px; }
-        input { width:100%; padding:10px; margin:5px 0; }
-        button { width:100%; padding:10px; background:#e91e63; color:white; border:none; cursor:pointer; }
-        .error { color:red; margin:5px 0; }
+        body {
+            background: linear-gradient(135deg, var(--secondary-rose), var(--primary-pink));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-lg);
+        }
+        
+        .login-container {
+            background: var(--white);
+            max-width: 450px;
+            width: 100%;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: var(--space-2xl);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--space-xl);
+        }
+        
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-coral));
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto var(--space-lg);
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: var(--space-md);
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+            transition: color var(--transition-fast);
+        }
+        
+        .password-toggle:hover {
+            color: var(--primary-pink);
+        }
     </style>
 </head>
 <body>
-    <div class="login-box">
-        <h2>Connexion Admin</h2>
-        <?php if($error) echo "<div class='error'>$error</div>"; ?>
-        <form method="post">
-            <input type="text" name="login" placeholder="Email ou Nom d'utilisateur" required>
-            <input type="password" name="password" placeholder="Mot de passe" required>
-            <button type="submit">Se connecter</button>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <h1 style="margin-bottom:0.5rem;">Administration</h1>
+            <p class="text-muted"><?= SITE_NAME ?></p>
+        </div>
+        
+        <?php if($error): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <?= $error ?>
+            </div>
+        <?php endif; ?>
+        
+       <form method="POST" action="login.php">
+            <div class="form-group">
+                <label class="form-label" for="login">
+                    <i class="fas fa-user"></i> Email ou Nom d'utilisateur
+                </label>
+                <input type="text" 
+                       id="login" 
+                       name="login" 
+                       class="form-control" 
+                       placeholder="admin@example.com"
+                       required
+                       autofocus>
+            </div>
+            
+            <div class="form-group" style="position:relative;">
+                <label class="form-label" for="password">
+                    <i class="fas fa-lock"></i> Mot de passe
+                </label>
+                <input type="password" 
+                       id="password" 
+                       name="password" 
+                       class="form-control" 
+                       placeholder="••••••••"
+                       required>
+                <span class="password-toggle" onclick="togglePassword()">
+                    <i id="toggleIcon" class="fas fa-eye"></i>
+                </span>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Se connecter
+            </button>
         </form>
+        
+        <div style="text-align:center; margin-top:var(--space-xl); padding-top:var(--space-xl); border-top:1px solid #E0E0E0;">
+            <a href="/" style="color:var(--primary-pink);">
+                <i class="fas fa-arrow-left"></i> Retour au site
+            </a>
+        </div>
     </div>
+    
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

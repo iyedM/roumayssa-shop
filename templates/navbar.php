@@ -1,26 +1,48 @@
 <?php
-// navbar.php
-session_start(); // si tu veux utiliser $_SESSION pour le panier ou admin
-require_once "includes/db.php";
+// navbar.php - Modern Navigation
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . "/../includes/db.php";
+require_once __DIR__ . "/../config/config.php";
 
-// Nombre d'articles dans le panier (session)
-$cartCount = isset($_SESSION['cart']) ? array_sum(array_column($_SESSION['cart'], 'quantity')) : 0;
+// Calculate cart count
+$cartCount = 0;
+if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $qty) {
+        $cartCount += $qty;
+    }
+}
 
-// Pour afficher les catégories
-$categories = $pdo->query("SELECT * FROM categories WHERE active=1 ORDER BY name")->fetchAll();
+// Get categories
+$categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 ?>
-<nav style="background:#e91e63; padding:10px; color:white;">
-    <a href="index.php" style="color:white; text-decoration:none; font-weight:bold;">Roumayssa Shop</a>
-    <span style="margin-left:20px;">
-        <?php foreach($categories as $cat): ?>
-            <a href="category.php?id=<?= $cat['id'] ?>" style="color:white; margin-right:10px;"><?= htmlspecialchars($cat['name']) ?></a>
-        <?php endforeach; ?>
-    </span>
-    <span style="float:right;">
-        <a href="cart.php" style="color:white;">Panier (<?= $cartCount ?>)</a>
-        <?php if(isset($_SESSION['admin_id'])): ?>
-            | <a href="admin/products.php" style="color:white;">Admin</a>
-        <?php endif; ?>
-    </span>
+<nav class="navbar">
+    <div class="container navbar-container">
+        <a href="/index.php" class="navbar-brand">
+            <i class="fas fa-shopping-bag"></i> <?= SITE_NAME ?>
+        </a>
+        
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="navbar-menu" id="navbarMenu">
+            <a href="/index.php" class="navbar-link"><i class="fas fa-home"></i> Accueil</a>
+            <a href="/shop.php" class="navbar-link"><i class="fas fa-store"></i> Boutique</a>
+            <a href="/contact.php" class="navbar-link"><i class="fas fa-envelope"></i> Contact</a>
+            
+            <a href="/cart.php" class="navbar-cart">
+                <i class="fas fa-shopping-cart"></i>
+                Panier
+                <?php if($cartCount > 0): ?>
+                    <span class="navbar-cart-badge"><?= $cartCount ?></span>
+                <?php endif; ?>
+            </a>
+            
+            <?php if(isset($_SESSION['admin_id'])): ?>
+                <a href="/admin/dashboard.php" class="navbar-link"><i class="fas fa-user-shield"></i> Admin</a>
+            <?php endif; ?>
+        </div>
+    </div>
 </nav>
-<hr>
