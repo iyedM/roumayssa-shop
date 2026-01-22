@@ -91,6 +91,14 @@ function changeImage(src){
 <p class="description"><?= nl2br(htmlspecialchars($product['description'])) ?></p>
 <?php endif; ?>
 
+<?php if ($product['stock'] > 0): ?>
+<form method="post" action="cart_add.php">
+    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+    Quantité : <input type="number" name="quantity" value="1" min="1" max="<?= $product['stock'] ?>" required>
+    <button type="submit">Ajouter au panier</button>
+</form>
+<?php endif; ?>
+
 <a class="back-link" href="admin/products.php">← Retour boutique</a>
 
 </div>
