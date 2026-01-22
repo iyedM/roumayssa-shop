@@ -18,27 +18,27 @@ $totalOrders = $stmt2->fetchColumn();
 $stmt3 = $pdo->query("SELECT COUNT(*) FROM categories");
 $totalCategories = $stmt3->fetchColumn();
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Dashboard Admin - Roumayssa Shop</title>
     <style>
-        body { font-family: Arial; margin:20px; }
-        .top { display:flex; justify-content:space-between; align-items:center; }
-        a { text-decoration:none; color:#e91e63; }
+        body { font-family: Arial; margin:20px; background:#f4f4f4; }
         .stats { display:flex; gap:20px; margin-top:20px; }
-        .card { background:#f8f8f8; padding:20px; border-radius:8px; flex:1; text-align:center; }
+        .card { background:#fff; padding:20px; border-radius:8px; flex:1; text-align:center; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
         ul { list-style:none; padding:0; }
         li { margin:5px 0; }
+        a { text-decoration:none; color:#e91e63; }
+        a:hover { text-decoration:underline; }
     </style>
 </head>
 <body>
-    <div class="top">
-        <h2>Bonjour, <?php echo $_SESSION['admin_name']; ?></h2>
-        <a href="logout.php">Déconnexion</a>
-    </div>
+
+<?php include 'templates/admin_navbar.php'; ?>
+
+<div style="padding:20px;">
+    <h2>Bonjour, <?php echo htmlspecialchars($_SESSION['admin_name']); ?></h2>
 
     <div class="stats">
         <div class="card">
@@ -63,5 +63,9 @@ $totalCategories = $stmt3->fetchColumn();
         <li><a href="purchases.php">Gérer les achats</a></li>
         <li><a href="site_content.php">Gérer le contenu site</a></li>
     </ul>
+</div>
+
+<?php include 'templates/admin_footer.php'; ?>
+
 </body>
 </html>
