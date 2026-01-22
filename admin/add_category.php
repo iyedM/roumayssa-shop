@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once "../includes/db.php";
+require_once "../config/config.php";
 
 if (!isset($_SESSION['admin_id'])) {
     header("Location: login.php");
@@ -12,7 +13,7 @@ $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
-
+    
     if (!$name) {
         $error = "Veuillez saisir un nom de catégorie.";
     } else {
@@ -20,33 +21,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO categories (name) VALUES (:name)");
             $stmt->execute(['name' => $name]);
             $success = "Catégorie ajoutée avec succès !";
+            $name = ''; // Clear form
         } catch (Exception $e) {
             $error = "Erreur : " . $e->getMessage();
         }
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Ajouter Catégorie</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter Catégorie - <?= SITE_NAME ?></title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    
+    <style>
+        body { background:var(--neutral-beige); }
+        .admin-navbar {
+            background: var(--dark-text);
+            color: var(--white);
+            padding: var(--space-md) 0;
+            box-shadow: var(--shadow-md);
+        }
+    </style>
 </head>
 <body>
 
-<h2>Ajouter une catégorie</h2>
+<nav class="admin-navbar">
+    <div class="container navbar-container">
+        <a href="/admin/dashboard.php" style="color:var(--white); font-weight:600; font-size:1.25rem;">
+            <i class="fas fa-shield-alt"></i> Administration
+        </a>
+        <div class="navbar-menu">
+            <a href="/" class="navbar-link" style="color:var(--white);"><i class="fas fa-home"></i> Site</a>
+            <a href="/admin/products.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-box"></i> Produits</a>
+            <a href="/admin/categories.php" class="navbar-link" style="color:var(--secondary-rose);"><i class="fas fa-tags"></i> Catégories</a>
+            <a href="/admin/orders.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-shopping-cart"></i> Commandes</a>
+            <a href="/admin/logout.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+        </div>
+    </div>
+</nav>
 
-<?php if($error): ?><p style="color:red"><?= $error ?></p><?php endif; ?>
-<?php if($success): ?><p style="color:green"><?= $success ?></p><?php endif; ?>
+<div class="container section">
+    <div class="mb-4">
+        <a href="/admin/categories.php" class="text-primary">
+            <i class="fas fa-arrow-left"></i> Retour aux catégories
+        </a>
+    </div>
+    
+    <div class="card" style="max-width:600px;">
+        <h1 class="mb-3"><i class="fas fa-plus-circle"></i> Ajouter une catégorie</h1>
+        
+        <?php if($error): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <?= $error ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if($success): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <?= $success ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method="POST" action="">
+            <div class="form-group">
+                <label class="form-label" for="name">
+                    <i class="fas fa-tag"></i> Nom de la catégorie <span style="color:var(--error-red);">*</span>
+                </label>
+                <input type="text" 
+                       id="name" 
+                       name="name" 
+                       class="form-control" 
+                       placeholder="Ex: Accessoires, Vêtements, Produits bébé..." 
+                       value="<?= htmlspecialchars($name ?? '') ?>"
+                       required
+                       autofocus>
+            </div>
+            
+            <div style="display:flex; gap:var(--space-md);">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+                <a href="/admin/categories.php" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 
-<form method="post">
-    Nom : <input type="text" name="name" required><br><br>
-    <button type="submit">Ajouter</button>
-</form>
-
-<br>
-<a href="categories.php">← Retour</a>
-
+<script src="/assets/js/main.js"></script>
 </body>
 </html>

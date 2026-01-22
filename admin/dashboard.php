@@ -19,13 +19,38 @@ $totalOrders = $stmt2->fetchColumn();
 $stmt3 = $pdo->query("SELECT COUNT(*) FROM categories");
 $totalCategories = $stmt3->fetchColumn();
 
-$stmt4 = $pdo->query("SELECT SUM(total_price) FROM orders");
+$stmt4 = $pdo->query("SELECT SUM(total_price) FROM orders WHERE status = 'confirmé'");
 $totalRevenue = $stmt4->fetchColumn() ?? 0;
+
+// Purchase price calculation (cost of confirmed orders)
+$stmt5 = $pdo->query("
+    SELECT SUM(oi.quantity * p.purchase_price) as total_cost
+    FROM order_items oi
+    JOIN products p ON oi.product_id = p.id
+    JOIN orders o ON oi.order_id = o.id
+    WHERE o.status = 'confirmé'
+");
+$totalPurchases = $stmt5->fetchColumn() ?? 0;
+
+// Profit calculation
+$totalProfit = $totalRevenue - $totalPurchases;
+
+// New orders count
+$stmt6 = $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'nouvelle'");
+$newOrders = $stmt6->fetchColumn();
 
 // Recent orders
 $recentOrders = $pdo->query("
     SELECT * FROM orders 
     ORDER BY created_at DESC 
+    LIMIT 5
+")->fetchAll();
+
+// Low stock alert
+$lowStockProducts = $pdo->query("
+    SELECT name, stock FROM products 
+    WHERE stock < 5 AND stock > 0
+    ORDER BY stock ASC 
     LIMIT 5
 ")->fetchAll();
 ?>
@@ -120,22 +145,30 @@ $recentOrders = $pdo->query("
             <i class="fas fa-shopping-cart stat-icon"></i>
             <h3>Commandes</h3>
             <p class="stat-value"><?= $totalOrders ?></p>
-        </div>
-        
-        <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #FF8A80, #FFC1E3);">
-            <i class="fas fa-tags stat-icon"></i>
-            <h3>Catégories</h3>
-            <p class="stat-value"><?= $totalCategories ?></p>
+            <?php if($newOrders > 0): ?>
+                <span class="badge badge-warning" style="position:absolute; top:1rem; right:1rem; background:#FF9800;">
+                    <?= $newOrders ?> nouvelle<?= $newOrders > 1 ? 's' : '' ?>
+                </span>
+            <?php endif; ?>
         </div>
         
         <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #4CAF50, #45a049);">
             <i class="fas fa-coins stat-icon"></i>
-            <h3>Revenu Total</h3>
+            <h3>Revenu (Confirmé)</h3>
             <p class="stat-value"><?= number_format($totalRevenue, 0) ?> <span style="font-size:1rem;">DT</span></p>
+        </div>
+        
+        <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #FF8A80, #FFC1E3);">
+            <i class="fas fa-chart-line stat-icon"></i>
+            <h3>Bénéfice (Estimé)</h3>
+            <p class="stat-value" style="<?= $totalProfit < 0 ? 'color:#FFEBEE;' : '' ?>">
+                <?= number_format($totalProfit, 0) ?> <span style="font-size:1rem;">DT</span>
+            </p>
+            <small style="opacity:0.8; font-size:0.75rem;">Coût: <?= number_format($totalPurchases, 0) ?> DT</small>
         </div>
     </div>
     
-    <!-- Quick Actions -->
+    <!-- Quick Actions & Recent Orders -->
     <div class="grid grid-2">
         <div class="card">
             <h2 class="mb-3"><i class="fas fa-bolt"></i> Actions rapides</h2>
@@ -155,9 +188,24 @@ $recentOrders = $pdo->query("
             </div>
         </div>
         
-        <!-- Recent Orders -->
-        <div class="card">
-            <h2 class="mb-3"><i class="fas fa-clock"></i> Commandes récentes</h2>
+        <!-- Recent Orders & Alerts -->
+        <div>
+            <!-- Low Stock Alert -->
+            <?php if(!empty($lowStockProducts)): ?>
+            <div class="card mb-3" style="border-left:4px solid var(--warning-orange);">
+                <h3 class="mb-2"><i class="fas fa-exclamation-triangle" style="color:var(--warning-orange);"></i> Stock faible</h3>
+                <?php foreach($lowStockProducts as $prod): ?>
+                    <div style="padding:0.5rem; background:var(--neutral-beige); border-radius:var(--radius-sm); margin-bottom:0.5rem;">
+                        <strong><?= htmlspecialchars($prod['name']) ?></strong>
+                        <span class="badge badge-warning" style="float:right;">Stock: <?= $prod['stock'] ?></span>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Recent Orders -->
+            <div class="card">
+                <h2 class="mb-3"><i class="fas fa-clock"></i> Commandes récentes</h2>
             <?php if (empty($recentOrders)): ?>
                 <p class="text-muted">Aucune commande pour le moment.</p>
             <?php else: ?>
