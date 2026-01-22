@@ -52,10 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $targetDir = __DIR__ . "/../uploads/"; // chemin serveur
                 $firstImage = true;
 
+                // Créer le dossier si inexistant
                 if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+
+                // Types autorisés et taille max 5Mo
+                $allowedTypes = ['image/jpeg','image/png','image/gif'];
+                $maxSize = 5 * 1024 * 1024;
 
                 foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
                     if ($_FILES['images']['error'][$key] === 0) {
+                        $fileType = $_FILES['images']['type'][$key];
+                        $fileSize = $_FILES['images']['size'][$key];
+
+                        if (!in_array($fileType, $allowedTypes)) continue;
+                        if ($fileSize > $maxSize) continue;
 
                         // Nettoyer le nom de fichier
                         $originalName = $_FILES['images']['name'][$key];
@@ -128,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Stock : <input type="number" name="stock" required><br><br>
     Actif : <input type="checkbox" name="active" checked><br><br>
 
-    Images : <input type="file" name="images[]" multiple><br><br>
+    Images : <input type="file" name="images[]" multiple accept=".jpg,.jpeg,.png,.gif"><br><br>
     Description : <textarea name="description" rows="4"></textarea><br><br>
 
     <button type="submit">Ajouter</button>
