@@ -23,16 +23,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Veuillez entrer une adresse email valide.";
     } else {
-        // In a real application, you would send an email or save to database
-        // For now, we'll just show a success message
-        $success = "Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.";
-        
-        // Optional: Save to database
-        // $stmt = $pdo->prepare("INSERT INTO contacts (name, email, phone, message, created_at) VALUES (?, ?, ?, ?, NOW())");
-        // $stmt->execute([$name, $email, $phone, $message]);
-        
-        // Clear form
-        $name = $email = $phone = $message = '';
+        try {
+            // Save to database
+            $stmt = $pdo->prepare("
+                INSERT INTO contact_messages (full_name, email, phone, message, lu, created_at) 
+                VALUES (:name, :email, :phone, :message, 0, NOW())
+            ");
+            $stmt->execute([
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'message' => $message
+            ]);
+            
+            $success = "Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.";
+            
+            // Clear form
+            $name = $email = $phone = $message = '';
+        } catch (Exception $e) {
+            $error = "Une erreur est survenue. Veuillez réessayer.";
+        }
     }
 }
 ?>

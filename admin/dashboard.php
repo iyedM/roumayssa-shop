@@ -39,6 +39,10 @@ $totalProfit = $totalRevenue - $totalPurchases;
 $stmt6 = $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'nouvelle'");
 $newOrders = $stmt6->fetchColumn();
 
+// Unread messages count
+$stmt7 = $pdo->query("SELECT COUNT(*) FROM contact_messages WHERE lu = 0");
+$unreadMessages = $stmt7->fetchColumn();
+
 // Recent orders
 $recentOrders = $pdo->query("
     SELECT * FROM orders 
@@ -122,6 +126,12 @@ $lowStockProducts = $pdo->query("
             <a href="/admin/products.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-box"></i> Produits</a>
             <a href="/admin/categories.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-tags"></i> Catégories</a>
             <a href="/admin/orders.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-shopping-cart"></i> Commandes</a>
+            <a href="/admin/messages.php" class="navbar-link" style="color:var(--white); position:relative;">
+                <i class="fas fa-envelope"></i> Messages
+                <?php if($unreadMessages > 0): ?>
+                    <span style="position:absolute; top:-5px; right:-5px; background:var(--error-red); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:bold;"><?= $unreadMessages ?></span>
+                <?php endif; ?>
+            </a>
             <a href="/admin/logout.php" class="navbar-link" style="color:var(--secondary-rose);"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
         </div>
     </div>
@@ -184,6 +194,12 @@ $lowStockProducts = $pdo->query("
                 </a>
                 <a href="/admin/orders.php" class="btn btn-outline">
                     <i class="fas fa-shopping-cart"></i> Voir les commandes
+                </a>
+                <a href="/admin/messages.php" class="btn btn-outline" style="position:relative;">
+                    <i class="fas fa-envelope"></i> Gérer les messages
+                    <?php if($unreadMessages > 0): ?>
+                        <span class="badge badge-danger" style="position:absolute; top:-8px; right:-8px;"><?= $unreadMessages ?></span>
+                    <?php endif; ?>
                 </a>
             </div>
         </div>

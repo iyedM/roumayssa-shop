@@ -38,30 +38,158 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 <section class="section">
     <div class="container">
         <h2 class="text-center mb-4">Nos Catégories</h2>
-        <div class="grid grid-4">
-            <?php 
-            $categoryIcons = [
-                'fas fa-tshirt',
-                'fas fa-gem',
-                'fas fa-baby',
-                'fas fa-shopping-bag'
-            ];
-            
-            foreach($categories as $index => $cat): 
-                $icon = $categoryIcons[$index % 4];
-            ?>
-                <a href="/shop.php?category=<?= $cat['id'] ?>" style="text-decoration:none;">
-                    <div class="category-card">
+        <div class="category-carousel-wrapper">
+            <button class="carousel-btn carousel-btn-prev" onclick="scrollCategories(-1)">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="category-carousel" id="categoryCarousel">
+                <?php 
+                $categoryIcons = [
+                    'fas fa-tshirt',
+                    'fas fa-gem',
+                    'fas fa-baby',
+                    'fas fa-shopping-bag'
+                ];
+                
+                foreach($categories as $index => $cat): 
+                    $icon = $categoryIcons[$index % 4];
+                ?>
+                    <a href="/shop.php?category=<?= $cat['id'] ?>" class="category-card-carousel">
                         <div class="category-icon">
                             <i class="<?= $icon ?>"></i>
                         </div>
                         <h3><?= htmlspecialchars($cat['name']) ?></h3>
-                    </div>
-                </a>
-            <?php endforeach; ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+            <button class="carousel-btn carousel-btn-next" onclick="scrollCategories(1)">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
     </div>
 </section>
+
+<style>
+.category-carousel-wrapper {
+    position: relative;
+    padding: 0 60px;
+}
+
+.category-carousel {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    padding: 1rem 0;
+}
+
+.category-carousel::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.category-card-carousel {
+    min-width: 200px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.category-card-carousel:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-pink);
+}
+
+.category-card-carousel .category-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, var(--primary-pink), var(--accent-coral));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    transition: transform var(--transition-normal);
+}
+
+.category-card-carousel:hover .category-icon {
+    transform: rotate(10deg) scale(1.1);
+}
+
+.category-card-carousel h3 {
+    color: var(--dark-text);
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--primary-pink);
+    color: var(--primary-pink);
+    font-size: 1.25rem;
+    cursor: pointer;
+    z-index: 10;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-md);
+}
+
+.carousel-btn:hover {
+    background: var(--primary-pink);
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-btn-prev {
+    left: 0;
+}
+
+.carousel-btn-next {
+    right: 0;
+}
+
+@media (max-width: 768px) {
+    .category-carousel-wrapper {
+        padding: 0 50px;
+    }
+    
+    .carousel-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .category-card-carousel {
+        min-width: 160px;
+    }
+}
+</style>
+
+<script>
+function scrollCategories(direction) {
+    const carousel = document.getElementById('categoryCarousel');
+    const scrollAmount = 250;
+    carousel.scrollBy({
+        left: direction * scrollAmount,
+        behavior: 'smooth'
+    });
+}
+</script>
 
 <!-- Featured Products Section -->
 <section class="section bg-white">
