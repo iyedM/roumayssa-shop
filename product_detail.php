@@ -61,23 +61,47 @@ if (!empty($imagesDb)) {
     <div class="grid grid-2" style="gap:3rem; align-items:flex-start;">
         <!-- Product Images -->
         <div>
-            <div style="background:white; padding:1.5rem; border-radius:var(--radius-md); box-shadow:var(--shadow-sm);">
-                <div style="margin-bottom:1rem;">
+            <div style="background:white; padding:1.5rem; border-radius:var(--radius-md); box-shadow:var(--shadow-sm); position:relative;">
+                <div style="margin-bottom:1rem; position:relative;">
                     <img id="mainImg" 
                          src="/<?= htmlspecialchars($images[0]) ?>" 
                          alt="<?= htmlspecialchars($product['name']) ?>" 
                          style="width:100%; height:400px; object-fit:contain; border-radius:var(--radius-md); transition: opacity 0.3s;">
+                    
+                    <?php if (count($images) > 1): ?>
+                        <!-- Navigation Arrows -->
+                        <button onclick="prevImage()" 
+                                style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:50px; height:50px; cursor:pointer; box-shadow:var(--shadow-md); display:flex; align-items:center; justify-content:center; transition:all 0.2s;"
+                                onmouseover="this.style.background='var(--primary-pink)'; this.style.color='white';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.color='#333';">
+                            <i class="fas fa-chevron-left" style="font-size:1.5rem;"></i>
+                        </button>
+                        
+                        <button onclick="nextImage()" 
+                                style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.9); border:none; border-radius:50%; width:50px; height:50px; cursor:pointer; box-shadow:var(--shadow-md); display:flex; align-items:center; justify-content:center; transition:all 0.2s;"
+                                onmouseover="this.style.background='var(--primary-pink)'; this.style.color='white';"
+                                onmouseout="this.style.background='rgba(255,255,255,0.9)'; this.style.color='#333';">
+                            <i class="fas fa-chevron-right" style="font-size:1.5rem;"></i>
+                        </button>
+                        
+                        <!-- Image Counter -->
+                        <div style="position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.7); color:white; padding:0.5rem 1rem; border-radius:var(--radius-sm); font-size:0.875rem;">
+                            <span id="currentImageIndex">1</span> / <?= count($images) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
                 <?php if (count($images) > 1): ?>
-                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem;">
-                        <?php foreach ($images as $img): ?>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:0.75rem;">
+                        <?php foreach ($images as $index => $img): ?>
                             <img src="/<?= htmlspecialchars($img) ?>" 
-                                 onclick="changeImage('/<?= htmlspecialchars($img) ?>')" 
+                                 onclick="changeImage('/<?= htmlspecialchars($img) ?>', <?= $index ?>)" 
+                                 id="thumb-<?= $index ?>"
                                  alt="Image produit"
-                                 style="width:100%; height:100px; object-fit:cover; border-radius:var(--radius-sm); cursor:pointer; border:2px solid transparent; transition:border-color 0.2s;"
+                                 class="thumbnail-img"
+                                 style="width:100%; height:80px; object-fit:cover; border-radius:var(--radius-sm); cursor:pointer; border:2px solid <?= $index === 0 ? 'var(--primary-pink)' : 'transparent' ?>; transition:all 0.2s;"
                                  onmouseover="this.style.borderColor='var(--primary-pink)'"
-                                 onmouseout="this.style.borderColor='transparent'">
+                                 onmouseout="if(this.id !== 'thumb-' + currentImageIdx) this.style.borderColor='transparent'">
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
@@ -197,5 +221,52 @@ if (!empty($imagesDb)) {
 
 <!-- JavaScript -->
 <script src="/assets/js/main.js"></script>
+<script>
+// Image gallery with arrow navigation
+const images = <?= json_encode($images) ?>;
+let currentImageIdx = 0;
+
+function changeImage(src, index) {
+    const mainImg = document.getElementById('mainImg');
+    mainImg.style.opacity = '0';
+    
+    setTimeout(() => {
+        mainImg.src = src;
+        mainImg.style.opacity = '1';
+        currentImageIdx = index;
+        
+        // Update counter if exists
+        const counter = document.getElementById('currentImageIndex');
+        if(counter) counter.textContent = index + 1;
+        
+        // Update thumbnail borders
+        document.querySelectorAll('.thumbnail-img').forEach((thumb, i) => {
+            if (thumb.id === 'thumb-' + index) {
+                thumb.style.borderColor = 'var(--primary-pink)';
+            } else {
+                thumb.style.borderColor = 'transparent';
+            }
+        });
+    }, 150);
+}
+
+function nextImage() {
+    if (images.length <= 1) return;
+    currentImageIdx = (currentImageIdx + 1) % images.length;
+    changeImage('/' + images[currentImageIdx], currentImageIdx);
+}
+
+function prevImage() {
+    if (images.length <= 1) return;
+    currentImageIdx = (currentImageIdx - 1 + images.length) % images.length;
+    changeImage('/' + images[currentImageIdx], currentImageIdx);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') nextImage();
+    if (e.key === 'ArrowLeft') prevImage();
+});
+</script>
 </body>
 </html>

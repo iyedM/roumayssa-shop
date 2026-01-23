@@ -20,7 +20,9 @@ $success = '';
 $total = 0;
 $cartItems = [];
 foreach ($cart as $pid => $qty) {
-    $stmt = $pdo->prepare("SELECT * FROM products WHERE id=:id");
+    $stmt = $pdo->prepare("SELECT p.*,
+        (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
+        FROM products p WHERE p.id=:id");
     $stmt->execute(['id' => $pid]);
     $prod = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -227,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php foreach ($cartItems as $item): ?>
                             <div style="display:flex; gap:0.75rem; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid #E0E0E0;">
                                 <?php 
-                                $imagePath = !empty($item['product']['image']) ? $item['product']['image'] : 'assets/images/no-image.png';
+                                $imagePath = !empty($item['product']['product_first_image']) ? $item['product']['product_first_image'] : 'assets/images/no-image.png';
                                 ?>
                                 <img src="/<?= htmlspecialchars($imagePath) ?>" 
                                      alt="<?= htmlspecialchars($item['product']['name']) ?>" 

@@ -8,11 +8,22 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
+// Pagination
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$perPage = 12;
+$offset = ($page - 1) * $perPage;
+
+// Count total products
+$totalProducts = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
+$totalPages = ceil($totalProducts / $perPage);
+
 $stmt = $pdo->query("
-    SELECT p.*, c.name AS category_name 
+    SELECT p.*, c.name AS category_name,
+    (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
     ORDER BY p.id DESC
+    LIMIT $perPage OFFSET $offset
 ");
 $products = $stmt->fetchAll();
 ?>
@@ -119,7 +130,7 @@ $products = $stmt->fetchAll();
                     <?php endif; ?>
                     
                     <?php 
-                    $imgSrc = !empty($p['image']) ? '../' . htmlspecialchars($p['image']) : '../assets/images/no-image.png';
+                    $imgSrc = !empty($p['product_first_image']) ? $p['product_first_image'] : '/assets/images/no-image.png';
                     ?>
                     <img src="<?= $imgSrc ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="product-img">
                     
@@ -169,6 +180,33 @@ $products = $stmt->fetchAll();
                     </div>
                 </div>
             <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+    
+    <!-- Pagination -->
+    <?php if($totalPages > 1): ?>
+        <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:var(--space-xl); flex-wrap:wrap;">
+            <?php if($page > 1): ?>
+                <a href="?page=<?= $page - 1 ?>" class="btn btn-outline btn-sm">
+                    <i class="fas fa-chevron-left"></i> Précédent
+                </a>
+            <?php endif; ?>
+            
+            <?php for($i = 1; $i <= $totalPages; $i++): ?>
+                <?php if($i == $page): ?>
+                    <span class="btn btn-primary btn-sm"><?= $i ?></span>
+                <?php elseif($i == 1 || $i == $totalPages || abs($i - $page) <= 2): ?>
+                    <a href="?page=<?= $i ?>" class="btn btn-outline btn-sm"><?= $i ?></a>
+                <?php elseif($i == $page - 3 || $i == $page + 3): ?>
+                    <span class="btn btn-outline btn-sm" disabled>...</span>
+                <?php endif; ?>
+            <?php endfor; ?>
+            
+            <?php if($page < $totalPages): ?>
+                <a href="?page=<?= $page + 1 ?>" class="btn btn-outline btn-sm">
+                    Suivant <i class="fas fa-chevron-right"></i>
+                </a>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </div>

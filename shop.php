@@ -13,7 +13,8 @@ $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
 
 // Build SQL query
-$sql = "SELECT p.*, c.name AS category_name 
+$sql = "SELECT p.*, c.name AS category_name,
+        (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.id 
         WHERE 1=1";
@@ -139,7 +140,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
                     
                     <a href="/product_detail.php?id=<?= $product['id'] ?>">
                         <?php 
-                        $imagePath = !empty($product['image']) ? $product['image'] : 'assets/images/no-image.png';
+                        $imagePath = !empty($product['product_first_image']) ? $product['product_first_image'] : 'assets/images/no-image.png';
                         ?>
                         <img src="/<?= htmlspecialchars($imagePath) ?>" 
                              alt="<?= htmlspecialchars($product['name']) ?>" 

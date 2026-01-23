@@ -8,6 +8,15 @@ if (!isset($_SESSION['admin_id'])) {
     exit;
 }
 
+// Pagination
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$perPage = 20;
+$offset = ($page - 1) * $perPage;
+
+// Count total
+$totalOrders = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+$totalPages = ceil($totalOrders / $perPage);
+
 // Get all orders with status
 $stmt = $pdo->query("
     SELECT o.*, 
@@ -20,6 +29,7 @@ $stmt = $pdo->query("
             ELSE 3
         END,
         o.created_at DESC
+    LIMIT $perPage OFFSET $offset
 ");
 $orders = $stmt->fetchAll();
 
@@ -219,6 +229,33 @@ foreach($orders as $order) {
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        <?php endif; ?>
+        
+        <!-- Pagination -->
+        <?php if($totalPages > 1): ?>
+            <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:var(--space-xl); flex-wrap:wrap;">
+                <?php if($page > 1): ?>
+                    <a href="?page=<?= $page - 1 ?>" class="btn btn-outline btn-sm">
+                        <i class="fas fa-chevron-left"></i> Précédent
+                    </a>
+                <?php endif; ?>
+                
+                <?php for($i = 1; $i <= $totalPages; $i++): ?>
+                    <?php if($i == $page): ?>
+                        <span class="btn btn-primary btn-sm"><?= $i ?></span>
+                    <?php elseif($i == 1 || $i == $totalPages || abs($i - $page) <= 2): ?>
+                        <a href="?page=<?= $i ?>" class="btn btn-outline btn-sm"><?= $i ?></a>
+                    <?php elseif($i == $page - 3 || $i == $page + 3): ?>
+                        <span>...</span>
+                    <?php endif; ?>
+                <?php endfor; ?>
+                
+                <?php if($page < $totalPages): ?>
+                    <a href="?page=<?= $page + 1 ?>" class="btn btn-outline btn-sm">
+                        Suivant <i class="fas fa-chevron-right"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
     </div>
 </div>

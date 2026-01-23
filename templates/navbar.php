@@ -19,8 +19,9 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 ?>
 <nav class="navbar">
     <div class="container navbar-container">
-        <a href="/index.php" class="navbar-brand">
-            <i class="fas fa-shopping-bag"></i> <?= SITE_NAME ?>
+        <a href="/index.php" class="navbar-brand" style="display:flex; align-items:center; gap:0.5rem;">
+            <img src="/assets/images/logo.jpg" alt="<?= SITE_NAME ?>" style="height:50px; width:auto; border-radius:8px;">
+            <span style="font-weight:700; font-size:1.25rem; color:var(--primary-pink);"><?= SITE_NAME ?></span>
         </a>
         
         <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
@@ -30,6 +31,17 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
         <div class="navbar-menu" id="navbarMenu">
             <a href="/index.php" class="navbar-link"><i class="fas fa-home"></i> Accueil</a>
             <a href="/shop.php" class="navbar-link"><i class="fas fa-store"></i> Boutique</a>
+            
+            <div class="navbar-dropdown">
+                <a href="#" class="navbar-link"><i class="fas fa-th"></i> Catégories <i class="fas fa-chevron-down" style="font-size:0.8em; margin-left:0.2rem;"></i></a>
+                <div class="dropdown-content">
+                    <a href="/shop.php">Tout voir</a>
+                    <?php foreach ($categories as $cat): ?>
+                        <a href="/shop.php?category=<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
             <a href="/contact.php" class="navbar-link"><i class="fas fa-envelope"></i> Contact</a>
             
             <a href="/cart.php" class="navbar-cart">

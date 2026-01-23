@@ -13,7 +13,9 @@ $cartItems = [];
 // Fetch product details for cart items
 if (!empty($cart)) {
     foreach ($cart as $pid => $qty) {
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE id=:id");
+        $stmt = $pdo->prepare("SELECT p.*,
+            (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
+            FROM products p WHERE p.id=:id");
         $stmt->execute(['id' => $pid]);
         $prod = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -65,7 +67,7 @@ if (!empty($cart)) {
                             <!-- Product Image -->
                             <a href="/product_detail.php?id=<?= $item['product']['id'] ?>">
                                 <?php 
-                                $imagePath = !empty($item['product']['image']) ? $item['product']['image'] : 'assets/images/no-image.png';
+                                $imagePath = !empty($item['product']['product_first_image']) ? $item['product']['product_first_image'] : 'assets/images/no-image.png';
                                 ?>
                                 <img src="/<?= htmlspecialchars($imagePath) ?>" 
                                      alt="<?= htmlspecialchars($item['product']['name']) ?>" 
