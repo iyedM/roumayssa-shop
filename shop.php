@@ -14,10 +14,11 @@ $sortBy = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
 
 // Build SQL query
 $sql = "SELECT p.*, c.name AS category_name,
-        (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
+        (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) AS product_first_image
         FROM products p 
         LEFT JOIN categories c ON p.category_id = c.id 
-        WHERE 1=1";
+        WHERE p.active = 1"; // <-- Ajouté ici
+
 
 $params = [];
 

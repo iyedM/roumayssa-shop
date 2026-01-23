@@ -22,7 +22,6 @@ $stmt = $pdo->query("
     (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
-    WHERE p.active = 1
     ORDER BY p.id DESC
     LIMIT $perPage OFFSET $offset
 ");

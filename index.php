@@ -12,7 +12,7 @@ $stmt = $pdo->query("
     SELECT p.*,
     (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
     FROM products p
-    WHERE p.stock > 0 
+    WHERE p.stock > 0 AND p.active = 1
     ORDER BY p.created_at DESC 
     LIMIT 8
 ");
