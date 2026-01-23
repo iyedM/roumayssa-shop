@@ -13,8 +13,8 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $perPage = 12;
 $offset = ($page - 1) * $perPage;
 
-// Count total products
-$totalProducts = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
+// Count total active products
+$totalProducts = $pdo->query("SELECT COUNT(*) FROM products WHERE active = 1")->fetchColumn();
 $totalPages = ceil($totalProducts / $perPage);
 
 $stmt = $pdo->query("
@@ -22,6 +22,7 @@ $stmt = $pdo->query("
     (SELECT image FROM product_images WHERE product_id = p.id ORDER BY id LIMIT 1) as product_first_image
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
+    WHERE p.active = 1
     ORDER BY p.id DESC
     LIMIT $perPage OFFSET $offset
 ");
@@ -130,7 +131,7 @@ $products = $stmt->fetchAll();
                     <?php endif; ?>
                     
                     <?php 
-                    $imgSrc = !empty($p['product_first_image']) ? $p['product_first_image'] : '/assets/images/no-image.png';
+                    $imgSrc = !empty($p['product_first_image']) ? '/' . $p['product_first_image'] : '/assets/images/no-image.png';
                     ?>
                     <img src="<?= $imgSrc ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="product-img">
                     
@@ -163,6 +164,16 @@ $products = $stmt->fetchAll();
                             </p>
                         <?php endif; ?>
                         
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                            <button 
+                                onclick="toggleActive(<?= $p['id'] ?>, <?= $p['active'] ?>)" 
+                                class="btn btn-sm" 
+                                id="toggle-btn-<?= $p['id'] ?>"
+                                style="flex:1; <?= $p['active'] ? 'background:var(--success-green); color:white;' : 'background:#ccc; color:#666;' ?>">
+                                <i class="fas <?= $p['active'] ? 'fa-eye' : 'fa-eye-slash' ?>"></i> 
+                                <?= $p['active'] ? 'Actif' : 'Inactif' ?>
+                            </button>
+                        </div>
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                             <a href="/admin/edit_product.php?id=<?= $p['id'] ?>" class="btn btn-secondary btn-sm" style="flex:1;">
                                 <i class="fas fa-edit"></i> Modifier
@@ -212,5 +223,46 @@ $products = $stmt->fetchAll();
 </div>
 
 <script src="/assets/js/main.js"></script>
+<script>
+function toggleActive(productId, currentStatus) {
+    const btn = document.getElementById('toggle-btn-' + productId);
+    const newStatus = currentStatus ? 0 : 1;
+    
+    // Disable button during request
+    btn.disabled = true;
+    
+    fetch('/admin/toggle_product_active.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'id=' + productId + '&active=' + newStatus
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update button appearance
+            if (newStatus === 1) {
+                btn.style.background = 'var(--success-green)';
+                btn.style.color = 'white';
+                btn.innerHTML = '<i class="fas fa-eye"></i> Actif';
+            } else {
+                btn.style.background = '#ccc';
+                btn.style.color = '#666';
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> Inactif';
+            }
+            btn.onclick = function() { toggleActive(productId, newStatus); };
+        } else {
+            alert('Erreur lors de la mise à jour');
+        }
+        btn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur de connexion');
+        btn.disabled = false;
+    });
+}
+</script>
 </body>
 </html>

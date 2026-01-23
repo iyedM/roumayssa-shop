@@ -52,7 +52,10 @@ if (!$error) {
         // Handle image upload
         $targetDir = __DIR__ . "/../uploads/";
         if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
+            if (!mkdir($targetDir, 0777, true)) {
+                throw new Exception("Impossible de créer le dossier uploads");
+            }
+            chmod($targetDir, 0777); // Ensure permissions are set correctly
         }
 
         $allowedTypes = ['image/jpeg','image/png','image/gif','image/webp','image/x-webp'];
@@ -60,16 +63,17 @@ if (!$error) {
         $firstImage = true;
 
         // Vérifier que des fichiers ont été envoyés
-        if (!empty($_FILES['images']['tmp_name'][0])) {
+        if (isset($_FILES['images']) && !empty($_FILES['images']['tmp_name'][0])) {
             foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
                 $errorCode = $_FILES['images']['error'][$key];
-                if ($errorCode !== 0) continue; // skip if error
+                if ($errorCode !== 0) continue;
 
                 $fileType = $_FILES['images']['type'][$key];
                 $fileSize = $_FILES['images']['size'][$key];
 
                 // Vérifier type et taille
-                if (!in_array($fileType, $allowedTypes) || $fileSize > $maxSize) continue;
+                if (!in_array($fileType, $allowedTypes)) continue;
+                if ($fileSize > $maxSize) continue;
 
                 // Nettoyer le nom de fichier
                 $originalName = $_FILES['images']['name'][$key];
@@ -77,7 +81,7 @@ if (!$error) {
                 $fileName = uniqid('product_') . '_' . $key . '_' . $cleanName;
 
                 $imagePathServer = $targetDir . $fileName;
-                $imagePathWeb = '/uploads/' . $fileName; // <-- ajouter slash devant
+                $imagePathWeb = 'uploads/' . $fileName;
 
                 // Déplacer le fichier
                 if (move_uploaded_file($tmpName, $imagePathServer)) {
@@ -101,9 +105,9 @@ if (!$error) {
                         $firstImage = false;
                     }
                 }
-            } // fin foreach images
+            }
         }
-
+        
         $success = "Produit ajouté avec succès !";
         $_POST = [];
 
