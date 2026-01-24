@@ -2,6 +2,10 @@
 session_start();
 require_once "includes/db.php";
 require_once "config/config.php";
+require_once "includes/security.php";
+
+// Initialize secure session
+initSecureSession();
 
 // SEO Meta
 $pageTitle = "Passer la commande";
@@ -36,32 +40,49 @@ foreach ($cart as $pid => $qty) {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $customer_name = trim($_POST['customer_name'] ?? '');
-    $customer_phone = trim($_POST['customer_phone'] ?? '');
-    $customer_address = trim($_POST['customer_address'] ?? '');
-    $delivery_method = $_POST['delivery_method'] ?? 'home';
-    
-    // Add delivery cost
-    $deliveryCost = $delivery_method === 'home' ? 7 : 0;
-    $finalTotal = $total + $deliveryCost;
-    
-    if (!$customer_name || !$customer_phone || !$customer_address) {
-        $error = "Veuillez remplir tous les champs obligatoires.";
-    }
-    
-    if (!$error) {
-        try {
-            // Create order
-            $stmt = $pdo->prepare("
-                INSERT INTO orders (customer_name, customer_phone, customer_address, total_price, created_at)
-                VALUES (:name, :phone, :address, :total, NOW())
-            ");
-            $stmt->execute([
-                'name' => $customer_name,
-                'phone' => $customer_phone,
-                'address' => $customer_address,
-                'total' => $finalTotal
-            ]);
+    // Verify CSRF token
+    $token = $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        $error = "Erreur de sécurité. Veuillez rafraîchir la page et réessayer.";
+    } else {
+        // Sanitize and validate inputs
+        $customer_name = validateCustomerName($_POST['customer_name'] ?? '', $error);
+        if ($customer_name === false) {
+            // Error is already set by validation function
+        } else {
+            $customer_phone = validateCustomerPhone($_POST['customer_phone'] ?? '', $error);
+            if ($customer_phone === false) {
+                // Error is already set
+            } else {
+                $customer_address = validateCustomerAddress($_POST['customer_address'] ?? '', $error);
+                if ($customer_address === false) {
+                    // Error is already set
+                } else {
+                    $delivery_method = sanitizeString($_POST['delivery_method'] ?? 'home');
+                    
+                    // Validate delivery method
+                    if (!in_array($delivery_method, ['home', 'pickup'])) {
+                        $delivery_method = 'home';
+                    }
+                    
+                    // Calculate delivery cost and livraison flag
+                    $deliveryCost = $delivery_method === 'home' ? 7 : 0;
+                    $livraison = $delivery_method === 'home' ? 1 : 0;
+                    $finalTotal = $total + $deliveryCost;
+                    
+                    try {
+                        // Create order with livraison field
+                        $stmt = $pdo->prepare("
+                            INSERT INTO orders (customer_name, customer_phone, customer_address, total_price, livraison, created_at)
+                            VALUES (:name, :phone, :address, :total, :livraison, NOW())
+                        ");
+                        $stmt->execute([
+                            'name' => $customer_name,
+                            'phone' => $customer_phone,
+                            'address' => $customer_address,
+                            'total' => $finalTotal,
+                            'livraison' => $livraison
+                        ]);
             $order_id = $pdo->lastInsertId();
             
             // Add order items
@@ -81,15 +102,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'qty' => $qty,
                     'price' => $price
                 ]);
+                    }
+                    
+                    // Clear cart
+                    unset($_SESSION['cart']);
+                    $success = "Votre commande a été passée avec succès ! Numéro de commande : #$order_id";
+                } catch (Exception $e) {
+                    $error = "Une erreur est survenue. Veuillez réessayer.";
+                }
             }
-            
-            // Clear cart
-            unset($_SESSION['cart']);
-            $success = "Votre commande a été passée avec succès ! Numéro de commande : #$order_id";
-        } catch (Exception $e) {
-            $error = "Une erreur est survenue. Veuillez réessayer.";
         }
     }
+}
 }
 ?>
 <?php include 'includes/header.php'; ?>
@@ -139,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                     
                     <form method="POST" action="/checkout.php" data-validate>
+                        <?= csrfTokenField() ?>
                         <div class="form-group">
                             <label class="form-label" for="customer_name">
                                 Nom et Prénom <span style="color:var(--error-red);">*</span>

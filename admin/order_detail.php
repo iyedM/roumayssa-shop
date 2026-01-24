@@ -32,6 +32,15 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute(['id'=>$id]);
 $items = $stmt->fetchAll();
+
+// Calculate product total (without delivery)
+$productTotal = 0;
+foreach($items as $item) {
+    $productTotal += $item['quantity'] * $item['price'];
+}
+
+// Calculate delivery fee based on livraison field
+$deliveryFee = ($order['livraison'] == 1) ? 7.00 : 0.00;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -157,6 +166,22 @@ $items = $stmt->fetchAll();
                 <?= nl2br(htmlspecialchars($order['customer_address'])) ?>
             </div>
             
+            <!-- Delivery Method -->
+            <div style="margin-top:var(--space-md); background:var(--neutral-beige); padding:var(--space-lg); border-radius:var(--radius-md);">
+                <strong style="display:block; margin-bottom:0.5rem; color:var(--primary-pink);">
+                    <i class="fas fa-truck"></i> Mode de livraison
+                </strong>
+                <?php if($order['livraison'] == 1): ?>
+                    <span class="badge badge-primary">
+                        <i class="fas fa-home"></i> Livraison à domicile (+7 DT)
+                    </span>
+                <?php else: ?>
+                    <span class="badge badge-success">
+                        <i class="fas fa-store"></i> Retrait en magasin (Gratuit)
+                    </span>
+                <?php endif; ?>
+            </div>
+            
             <!-- Status Management -->
             <?php if($status === 'nouvelle'): ?>
                 <div class="status-actions">
@@ -203,10 +228,25 @@ $items = $stmt->fetchAll();
                 </div>
             <?php endforeach; ?>
             
-            <!-- Total -->
+            <!-- Total Breakdown -->
             <div style="margin-top:var(--space-lg); padding-top:var(--space-lg); border-top:2px solid #E0E0E0;">
+                <!-- Product Total -->
+                <div class="flex-between" style="margin-bottom:var(--space-sm);">
+                    <span>Total produits:</span>
+                    <strong><?= number_format($productTotal, 2) ?> DT</strong>
+                </div>
+                
+                <!-- Delivery Fee -->
+                <div class="flex-between" style="margin-bottom:var(--space-md); padding-bottom:var(--space-md); border-bottom:1px solid #E0E0E0;">
+                    <span>Frais de livraison:</span>
+                    <strong style="color:<?= $deliveryFee > 0 ? 'var(--primary-pink)' : 'var(--success-green)' ?>;">
+                        <?= $deliveryFee > 0 ? '+' : '' ?><?= number_format($deliveryFee, 2) ?> DT
+                    </strong>
+                </div>
+                
+                <!-- Final Total -->
                 <div class="flex-between" style="font-size:1.5rem;">
-                    <strong>Total</strong>
+                    <strong>Total payé:</strong>
                     <strong class="text-primary"><?= number_format($order['total_price'], 2) ?> DT</strong>
                 </div>
             </div>

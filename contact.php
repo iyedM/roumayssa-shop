@@ -2,6 +2,10 @@
 session_start();
 require_once "includes/db.php";
 require_once "config/config.php";
+require_once "includes/security.php";
+
+// Initialize secure session
+initSecureSession();
 
 // SEO Meta
 $pageTitle = "Contact";
@@ -12,36 +16,51 @@ $error = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $message = trim($_POST['message'] ?? '');
-    
-    // Validation
-    if (empty($name) || empty($email) || empty($message)) {
-        $error = "Veuillez remplir tous les champs obligatoires.";
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = "Veuillez entrer une adresse email valide.";
+    // Verify CSRF token
+    $token = $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        $error = "Erreur de sécurité. Veuillez rafraîchir la page et réessayer.";
     } else {
-        try {
-            // Save to database
-            $stmt = $pdo->prepare("
-                INSERT INTO contact_messages (full_name, email, phone, message, lu, created_at) 
-                VALUES (:name, :email, :phone, :message, 0, NOW())
-            ");
-            $stmt->execute([
-                'name' => $name,
-                'email' => $email,
-                'phone' => $phone,
-                'message' => $message
-            ]);
-            
-            $success = "Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.";
-            
-            // Clear form
-            $name = $email = $phone = $message = '';
-        } catch (Exception $e) {
-            $error = "Une erreur est survenue. Veuillez réessayer.";
+        // Sanitize and validate inputs
+        $name = validateCustomerName($_POST['name'] ?? '', $error);
+        if ($name === false) {
+            // Error already set
+        } else {
+            $email = validateEmailInput($_POST['email'] ?? '', $error);
+            if ($email === false) {
+                // Error already set
+            } else {
+                $phone = sanitizePhone($_POST['phone'] ?? '');
+                $message = sanitizeString($_POST['message'] ?? '');
+                
+                // Validate message
+                if (!validateRequired($message)) {
+                    $error = "Le message est requis.";
+                } elseif (!validateLength($message, 10, 1000)) {
+                    $error = "Le message doit contenir entre 10 et 1000 caractères.";
+                } else {
+                    try {
+                        // Save to database
+                        $stmt = $pdo->prepare("
+                            INSERT INTO contact_messages (full_name, email, phone, message, lu, created_at) 
+                            VALUES (:name, :email, :phone, :message, 0, NOW())
+                        ");
+                        $stmt->execute([
+                            'name' => $name,
+                            'email' => $email,
+                            'phone' => $phone,
+                            'message' => $message
+                        ]);
+                        
+                        $success = "Merci pour votre message ! Nous vous répondrons dans les plus brefs délais.";
+                        
+                        // Clear form
+                        $name = $email = $phone = $message = '';
+                    } catch (Exception $e) {
+                        $error = "Une erreur est survenue. Veuillez réessayer.";
+                    }
+                }
+            }
         }
     }
 }
@@ -81,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <form method="POST" action="/contact.php">
+                <?= csrfTokenField() ?>
                 <div class="form-group">
                     <label class="form-label" for="name">Nom complet <span style="color:var(--error-red);">*</span></label>
                     <input type="text" 

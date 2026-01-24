@@ -2,6 +2,10 @@
 session_start();
 require_once "../includes/db.php";
 require_once "../config/config.php";
+require_once "../includes/security.php";
+
+// Initialize secure session
+initSecureSession();
 
 // If already logged in, redirect to dashboard
 if (isset($_SESSION['admin_id'])) {
@@ -12,22 +16,38 @@ if (isset($_SESSION['admin_id'])) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = $_POST['login'] ?? '';
-    $password = $_POST['password'] ?? '';
-    
-    // Check if admin exists
-    $stmt = $pdo->prepare("SELECT * FROM admin WHERE email = :login OR username = :login");
-    $stmt->execute(['login' => $login]);
-    $admin = $stmt->fetch();
-    
-    if ($admin && $password === $admin['password']) {
-        // Login successful
-        $_SESSION['admin_id'] = $admin['id'];
-        $_SESSION['admin_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
-        header("Location: dashboard.php");
-        exit;
+    // Verify CSRF token
+    $token = $_POST['csrf_token'] ?? '';
+    if (!validateCsrfToken($token)) {
+        $error = "Erreur de sécurité. Veuillez réessayer.";
     } else {
-        $error = "Nom d'utilisateur ou mot de passe incorrect.";
+        $login = sanitizeString($_POST['login'] ?? '');
+        $password = $_POST['password'] ?? '';
+        
+        // Validate inputs
+        if (!validateRequired($login) || !validateRequired($password)) {
+            $error = "Tous les champs sont requis.";
+        } else {
+            // Check if admin exists
+            $stmt = $pdo->prepare("SELECT * FROM admin WHERE email = :login OR username = :login");
+            $stmt->execute(['login' => $login]);
+            $admin = $stmt->fetch();
+            
+            // Verify password using password_verify
+            if ($admin && password_verify($password, $admin['password'])) {
+                // Login successful - regenerate session ID to prevent fixation
+                session_regenerate_id(true);
+                
+                $_SESSION['admin_id'] = $admin['id'];
+                $_SESSION['admin_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
+                $_SESSION['last_activity'] = time();
+                
+                header("Location: dashboard.php");
+                exit;
+            } else {
+                $error = "Nom d'utilisateur ou mot de passe incorrect.";
+            }
+        }
     }
 }
 ?>
@@ -116,6 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         
        <form method="POST" action="login.php">
+            <?= csrfTokenField() ?>
             <div class="form-group">
                 <label class="form-label" for="login">
                     <i class="fas fa-user"></i> Email ou Nom d'utilisateur

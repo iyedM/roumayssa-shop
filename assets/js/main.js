@@ -1,12 +1,12 @@
 // Mobile Menu Toggle
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const navbarMenu = document.getElementById('navbarMenu');
-    
+
     if (mobileMenuToggle && navbarMenu) {
-        mobileMenuToggle.addEventListener('click', function() {
+        mobileMenuToggle.addEventListener('click', function () {
             navbarMenu.classList.toggle('active');
-            
+
             // Change icon
             const icon = this.querySelector('i');
             if (navbarMenu.classList.contains('active')) {
@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.classList.add('fa-bars');
             }
         });
-        
+
         // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             if (!event.target.closest('.navbar-container')) {
                 navbarMenu.classList.remove('active');
                 const icon = mobileMenuToggle.querySelector('i');
@@ -28,6 +28,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Mobile Category Accordion
+    const categoryDropdowns = document.querySelectorAll('.navbar-dropdown');
+    categoryDropdowns.forEach(dropdown => {
+        const link = dropdown.querySelector('.navbar-link');
+        if (link && window.innerWidth <= 768) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Close all other dropdowns
+                categoryDropdowns.forEach(otherDropdown => {
+                    if (otherDropdown !== dropdown) {
+                        otherDropdown.classList.remove('active');
+                    }
+                });
+
+                // Toggle current dropdown
+                dropdown.classList.toggle('active');
+            });
+        }
+    });
 });
 
 // Image Gallery for Product Detail
@@ -35,7 +56,7 @@ function changeImage(src) {
     const mainImg = document.getElementById('mainImg');
     if (mainImg) {
         mainImg.src = src;
-        
+
         // Add smooth transition
         mainImg.style.opacity = '0.5';
         setTimeout(() => {
@@ -50,21 +71,21 @@ function updateQuantity(input, change) {
     const newValue = currentValue + change;
     const max = parseInt(input.max) || 999;
     const min = parseInt(input.min) || 1;
-    
+
     if (newValue >= min && newValue <= max) {
         input.value = newValue;
     }
 }
 
 // Form Validation Enhancement
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const forms = document.querySelectorAll('form[data-validate]');
-    
+
     forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             let isValid = true;
             const requiredInputs = form.querySelectorAll('[required]');
-            
+
             requiredInputs.forEach(input => {
                 if (!input.value.trim()) {
                     isValid = false;
@@ -73,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     input.style.borderColor = '';
                 }
             });
-            
+
             if (!isValid) {
                 e.preventDefault();
                 alert('Veuillez remplir tous les champs obligatoires.');
@@ -105,12 +126,12 @@ function showToast(message, type = 'success') {
     toast.style.zIndex = '9999';
     toast.style.minWidth = '300px';
     toast.style.animation = 'slideInRight 0.3s ease';
-    
+
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => {
@@ -120,11 +141,11 @@ function showToast(message, type = 'success') {
 }
 
 // Add to Cart Animation
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const addToCartForms = document.querySelectorAll('form[action*="cart_add"]');
-    
+
     addToCartForms.forEach(form => {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function () {
             showToast('Produit ajouté au panier !', 'success');
         });
     });

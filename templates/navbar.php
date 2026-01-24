@@ -20,7 +20,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 <nav class="navbar">
     <div class="container navbar-container">
         <a href="/index.php" class="navbar-brand" style="display:flex; align-items:center; gap:0.5rem;">
-            <img src="/assets/images/logo.jpg" alt="<?= SITE_NAME ?>" style="height:50px; width:auto; border-radius:8px;">
+            <img src="/assets/images/logo.jpg" alt="<?= SITE_NAME ?>" style="height:60px; width:auto; border-radius:8px;">
             <span style="font-weight:700; font-size:1.25rem; color:var(--primary-pink);"><?= SITE_NAME ?></span>
         </a>
         
