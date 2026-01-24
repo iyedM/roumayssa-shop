@@ -60,6 +60,10 @@ $newOrders = $stmt6->fetchColumn();
 $stmt7 = $pdo->query("SELECT COUNT(*) FROM contact_messages WHERE lu = 0");
 $unreadMessages = $stmt7->fetchColumn();
 
+// Total messages count
+$stmt8 = $pdo->query("SELECT COUNT(*) FROM contact_messages");
+$totalMessages = $stmt8->fetchColumn();
+
 // Recent orders
 $recentOrders = $pdo->query("
     SELECT * FROM orders 
@@ -172,11 +176,8 @@ $lowStockProducts = $pdo->query("
             <i class="fas fa-shopping-cart stat-icon"></i>
             <h3>Commandes</h3>
             <p class="stat-value"><?= $totalOrders ?></p>
-            <?php if($newOrders > 0): ?>
-                <span class="badge badge-warning" style="position:absolute; top:1rem; right:1rem; background:#FF9800;">
-                    <?= $newOrders ?> nouvelle<?= $newOrders > 1 ? 's' : '' ?>
-                </span>
-            <?php endif; ?>
+            <small style="opacity:0.8; font-size:0.75rem;"><?= $newOrders ?> nouvelle<?= $newOrders > 1 ? 's' : '' ?></small>
+
         </div>
         
         <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #4CAF50, #45a049);">
@@ -200,6 +201,18 @@ $lowStockProducts = $pdo->query("
                 <?= number_format($totalProfit, 0) ?> <span style="font-size:1rem;">DT</span>
             </p>
             <small style="opacity:0.8; font-size:0.75rem;">Revenu - Coût d'achat</small>
+        </div>
+
+        <div class="stat-card" style="position:relative; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));">
+            <i class="fas fa-envelope stat-icon"></i>
+            <h3>Messages</h3>
+            <p class="stat-value"><?= $totalMessages ?></p>
+            <small style="opacity:0.8; font-size:0.75rem;"><?= $unreadMessages ?> non lu<?= $unreadMessages > 1 ? 's' : '' ?></small>
+            <?php if($unreadMessages > 0): ?>
+                <span class="badge badge-danger" style="position:absolute; top:1rem; right:1rem; background:var(--error-red);">
+                    <?= $unreadMessages ?>
+                </span>
+            <?php endif; ?>
         </div>
     </div>
     

@@ -28,7 +28,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 <!-- Hero Section -->
 <section class="hero">
     <div class="container">
-        <h1 class="hero-title">✨ Bienvenue chez <?= SITE_NAME ?> ✨</h1>
+        <h1 class="hero-title">✨ Bienvenue chez     <?= SITE_NAME ?> ✨</h1>
         <p class="hero-subtitle">Votre boutique en ligne de vêtements féminins, accessoires et produits pour bébé</p>
         <a href="/shop.php" class="btn btn-primary btn-lg">Découvrir la Boutique</a>
     </div>
