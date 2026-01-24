@@ -19,21 +19,38 @@ $totalOrders = $stmt2->fetchColumn();
 $stmt3 = $pdo->query("SELECT COUNT(*) FROM categories");
 $totalCategories = $stmt3->fetchColumn();
 
-$stmt4 = $pdo->query("SELECT SUM(total_price) FROM orders WHERE status = 'confirmé'");
-$totalRevenue = $stmt4->fetchColumn() ?? 0;
+// Calculate product revenue only (exclude delivery fees)
+$stmt4 = $pdo->query("
+    SELECT SUM(oi.quantity * oi.price) as product_revenue
+    FROM order_items oi
+    JOIN orders o ON oi.order_id = o.id
+    WHERE o.status = 'confirmé'
+");
+$productRevenue = $stmt4->fetchColumn() ?? 0;
+
+// Calculate delivery fees collected separately
+$stmt5 = $pdo->query("
+    SELECT SUM(CASE WHEN livraison = 1 THEN 7 ELSE 0 END) as delivery_fees
+    FROM orders
+    WHERE status = 'confirmé'
+");
+$deliveryFeesCollected = $stmt5->fetchColumn() ?? 0;
+
+// Total revenue (product + delivery)
+$totalRevenue = $productRevenue + $deliveryFeesCollected;
 
 // Purchase price calculation (cost of confirmed orders)
-$stmt5 = $pdo->query("
+$stmt6 = $pdo->query("
     SELECT SUM(oi.quantity * p.purchase_price) as total_cost
     FROM order_items oi
     JOIN products p ON oi.product_id = p.id
     JOIN orders o ON oi.order_id = o.id
     WHERE o.status = 'confirmé'
 ");
-$totalPurchases = $stmt5->fetchColumn() ?? 0;
+$totalPurchases = $stmt6->fetchColumn() ?? 0;
 
-// Profit calculation
-$totalProfit = $totalRevenue - $totalPurchases;
+// Profit calculation (product revenue - product cost, excluding delivery fees)
+$totalProfit = $productRevenue - $totalPurchases;
 
 // New orders count
 $stmt6 = $pdo->query("SELECT COUNT(*) FROM orders WHERE status = 'nouvelle'");
@@ -164,17 +181,25 @@ $lowStockProducts = $pdo->query("
         
         <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #4CAF50, #45a049);">
             <i class="fas fa-coins stat-icon"></i>
-            <h3>Revenu (Confirmé)</h3>
-            <p class="stat-value"><?= number_format($totalRevenue, 0) ?> <span style="font-size:1rem;">DT</span></p>
+            <h3>Revenu Produits</h3>
+            <p class="stat-value"><?= number_format($productRevenue, 0) ?> <span style="font-size:1rem;">DT</span></p>
+            <small style="opacity:0.8; font-size:0.75rem;">Hors frais de livraison</small>
+        </div>
+        
+        <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #63B3ED, #B794F6);">
+            <i class="fas fa-truck stat-icon"></i>
+            <h3>Frais de Livraison</h3>
+            <p class="stat-value"><?= number_format($deliveryFeesCollected, 0) ?> <span style="font-size:1rem;">DT</span></p>
+            <small style="opacity:0.8; font-size:0.75rem;">Collectés</small>
         </div>
         
         <div class="stat-card" style="position:relative; background: linear-gradient(135deg, #FF8A80, #FFC1E3);">
             <i class="fas fa-chart-line stat-icon"></i>
-            <h3>Bénéfice (Estimé)</h3>
+            <h3>Bénéfice Net</h3>
             <p class="stat-value" style="<?= $totalProfit < 0 ? 'color:#FFEBEE;' : '' ?>">
                 <?= number_format($totalProfit, 0) ?> <span style="font-size:1rem;">DT</span>
             </p>
-            <small style="opacity:0.8; font-size:0.75rem;">Coût: <?= number_format($totalPurchases, 0) ?> DT</small>
+            <small style="opacity:0.8; font-size:0.75rem;">Revenu - Coût d'achat</small>
         </div>
     </div>
     
