@@ -25,6 +25,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="/admin/orders.php" class="navbar-link <?= in_array($currentPage, ['orders.php', 'order_detail.php']) ? 'active' : '' ?>">
                 <i class="fas fa-shopping-cart"></i> Commandes
             </a>
+            <a href="/admin/manage_admins.php" class="navbar-link <?= $currentPage == 'manage_admins.php' ? 'active' : '' ?>">
+                <i class="fas fa-user-shield"></i> Admins
+            </a>
             <a href="/admin/messages.php" class="navbar-link <?= in_array($currentPage, ['messages.php', 'message_detail.php']) ? 'active' : '' ?>">
                 <i class="fas fa-envelope"></i> Messages
                 <?php if(isset($unreadMessages) && $unreadMessages > 0): ?>
