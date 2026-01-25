@@ -107,10 +107,6 @@ $lowStockProducts = $pdo->query("
             transition: transform var(--transition-fast);
         }
         
-        .stat-card:hover {
-            transform: translateY(-4px);
-        }
-        
         .stat-icon {
             font-size: 2.5rem;
             opacity: 0.3;
@@ -137,26 +133,7 @@ $lowStockProducts = $pdo->query("
 </head>
 <body style="background:var(--neutral-beige);">
 
-<nav class="admin-navbar">
-    <div class="container navbar-container">
-        <a href="/admin/dashboard.php" style="color:var(--white); font-weight:600; font-size:1.25rem;">
-            <i class="fas fa-shield-alt"></i> Administration
-        </a>
-        <div class="navbar-menu">
-            <a href="/" class="navbar-link" style="color:var(--white);"><i class="fas fa-home"></i> Site</a>
-            <a href="/admin/products.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-box"></i> Produits</a>
-            <a href="/admin/categories.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-tags"></i> Catégories</a>
-            <a href="/admin/orders.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-shopping-cart"></i> Commandes</a>
-            <a href="/admin/messages.php" class="navbar-link" style="color:var(--white); position:relative;">
-                <i class="fas fa-envelope"></i> Messages
-                <?php if($unreadMessages > 0): ?>
-                    <span style="position:absolute; top:-5px; right:-5px; background:var(--error-red); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:bold;"><?= $unreadMessages ?></span>
-                <?php endif; ?>
-            </a>
-            <a href="/admin/logout.php" class="navbar-link" style="color:var(--secondary-rose);"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
-        </div>
-    </div>
-</nav>
+<?php include '../templates/admin_navbar.php'; ?>
 
 <div class="container section">
     <h1 class="mb-4">

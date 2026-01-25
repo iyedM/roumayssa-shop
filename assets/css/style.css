@@ -815,8 +815,8 @@ textarea.form-control {
   position: relative;
   z-index: 1;
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-xl);
   padding: var(--space-3xl);
@@ -892,17 +892,34 @@ textarea.form-control {
     min-height: 60vh;
     padding: var(--space-2xl) 0;
     background-attachment: scroll;
+    /* Reduce gradient opacity on mobile to make image more visible */
+    background-image:
+      linear-gradient(135deg,
+        rgba(255, 107, 157, 0.4) 0%,
+        rgba(255, 193, 227, 0.3) 50%,
+        rgba(255, 138, 128, 0.4) 100%),
+      url('/assets/images/hero-bg.jpg');
+    background-position: center bottom;
+    /* Better positioning for mobile */
   }
 
   .hero .container {
-    padding: var(--space-xl);
+    padding: var(--space-lg);
+    background: rgba(0, 0, 0, 0.2);
+    /* Darker overlay for better text contrast with transparent background */
+    margin: 0 var(--space-md);
   }
 
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
   }
 
   .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .hero .btn {
+    padding: var(--space-md) var(--space-xl);
     font-size: 1.125rem;
   }
 }

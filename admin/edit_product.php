@@ -66,9 +66,16 @@ if (isset($_GET['delete_image'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $category = $_POST['category'];
-    $price = floatval($_POST['price']);
-    $promo_price = !empty($_POST['promo_price']) ? floatval($_POST['promo_price']) : null;
-    $purchase_price = floatval($_POST['purchase_price']);
+    
+    // Handle both dot and comma as decimal separator
+    $price_raw = str_replace(',', '.', $_POST['price'] ?? '0');
+    $promo_price_raw = !empty($_POST['promo_price']) ? str_replace(',', '.', $_POST['promo_price']) : null;
+    $purchase_price_raw = str_replace(',', '.', $_POST['purchase_price'] ?? '0');
+    
+    $price = floatval($price_raw);
+    $promo_price = $promo_price_raw !== null ? floatval($promo_price_raw) : null;
+    $purchase_price = floatval($purchase_price_raw);
+    
     $stock = intval($_POST['stock']);
     $active = isset($_POST['active']) ? 1 : 0;
     $description = trim($_POST['description']);
@@ -165,12 +172,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <style>
         body { background:var(--neutral-beige); }
-        .admin-navbar {
-            background: var(--dark-text);
-            color: var(--white);
-            padding: var(--space-md) 0;
-            box-shadow: var(--shadow-md);
-        }
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -227,20 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-<nav class="admin-navbar">
-    <div class="container navbar-container">
-        <a href="/admin/dashboard.php" style="color:var(--white); font-weight:600; font-size:1.25rem;">
-            <i class="fas fa-shield-alt"></i> Administration
-        </a>
-        <div class="navbar-menu">
-            <a href="/" class="navbar-link" style="color:var(--white);"><i class="fas fa-home"></i> Site</a>
-            <a href="/admin/products.php" class="navbar-link" style="color:var(--secondary-rose);"><i class="fas fa-box"></i> Produits</a>
-            <a href="/admin/categories.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-tags"></i> Catégories</a>
-            <a href="/admin/orders.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-shopping-cart"></i> Commandes</a>
-            <a href="/admin/logout.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
-        </div>
-    </div>
-</nav>
+<?php include '../templates/admin_navbar.php'; ?>
 
 <div class="container section">
     <div class="mb-4">

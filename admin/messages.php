@@ -53,12 +53,6 @@ $unreadCount = $pdo->query("SELECT COUNT(*) FROM contact_messages WHERE lu = 0")
     
     <style>
         body { background:var(--neutral-beige); }
-        .admin-navbar {
-            background: var(--dark-text);
-            color: var(--white);
-            padding: var(--space-md) 0;
-            box-shadow: var(--shadow-md);
-        }
         .message-row {
             background: var(--white);
             padding: var(--space-md);
@@ -129,21 +123,7 @@ $unreadCount = $pdo->query("SELECT COUNT(*) FROM contact_messages WHERE lu = 0")
 </head>
 <body>
 
-<nav class="admin-navbar">
-    <div class="container navbar-container">
-        <a href="/admin/dashboard.php" style="color:var(--white); font-weight:600; font-size:1.25rem;">
-            <i class="fas fa-shield-alt"></i> Administration
-        </a>
-        <div class="navbar-menu">
-            <a href="/" class="navbar-link" style="color:var(--white);"><i class="fas fa-home"></i> Site</a>
-            <a href="/admin/products.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-box"></i> Produits</a>
-            <a href="/admin/categories.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-tags"></i> Catégories</a>
-            <a href="/admin/orders.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-shopping-cart"></i> Commandes</a>
-            <a href="/admin/messages.php" class="navbar-link" style="color:var(--secondary-rose);"><i class="fas fa-envelope"></i> Messages</a>
-            <a href="/admin/logout.php" class="navbar-link" style="color:var(--white);"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
-        </div>
-    </div>
-</nav>
+<?php include '../templates/admin_navbar.php'; ?>
 
 <div class="container section">
     <div class="flex-between mb-4">
